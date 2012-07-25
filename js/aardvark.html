@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title></title>
+</head>
+<body>
+<script type="text/javascript">
+var tipo_t =
+{
+  QUESTAO: 0,
+  NOME_ANIMAL: 1
+};
+
+var resposta_t = 
+{
+  NAO: 0,
+  SIM: 1
+};
+
+var noh_s = function()
+{
+  return {
+    'info': '',          // informacao 
+    'tipo': '',          // tipo de informacao (ENUM tipo_t)
+    'ramo': new Array(2) // ARRAY DE nos
+    }
+}
+
+var cria_novo_noh = function(i)
+{
+  var noh = noh_s();
+  noh.info = i;
+  noh.tipo = tipo_t.NOME_ANIMAL;
+  noh.ramo[resposta_t.SIM] = null;
+  noh.ramo[resposta_t.NAO] = null;
+  return noh;
+}
+
+var adiciona_noh = function(atual, filho, lado) {
+    if (atual == null) {
+        alert("ERRO: Insercao em um noh nulo\n");
+    }
+    else {
+        atual.ramo[lado] = filho;
+    }    
+}
+
+var Aadvark =
+{
+  insere_nova_questao: function(noh_atual) {
+    if (noh_atual == null || noh_atual.tipo != tipo_t.NOME_ANIMAL) {
+        alert("ERRO: Noh com nome de animal incorreto ou nulo\n");
+        return;
+    }
+    else {
+        this.animal_correto = null;
+        this.pergunta = null;
+        this.linha = null;
+        this.resp = null; 
+        this.novo_animal = null;
+        
+        this.animal_correto = prompt('EU DESISTO! EM QUE ANIMAL ESTAVA PENSANDO?','');
+        
+        this.pergunta = prompt("QUE PERGUNTA EU POSSO FAZER PARA DISTINGUIR UM(A) " 
+                   + noh_atual.info 
+                   + " DE UM(A) " 
+                   + this.animal_correto 
+                   + " ?\n");
+
+        do {
+            this.linha = prompt("PARA UM(A) " + 
+            this.animal_correto + ", QUAL E A RESPOSTA PARA \"" + this.pergunta + "\" [S/N]? ");
+            /* Apresenta a nova questao para o novo animal */
+        } 
+        while (this.linha[0].toUpperCase() != 'S' && this.linha[0].toUpperCase() != 'N');
+        this.resp = this.linha[0].toUpperCase() == 'S' ? resposta_t.SIM : resposta_t.NAO;
+
+        /* Aqui eh a parte complicada -- o no atual vai virar uma pergunta, e dois nohs
+           vao ser inseridos nele, um para cada animal envolvido na desambiguacao */
+
+        this.novo_animal = cria_novo_noh(this.animal_correto); /* Adiciona animal correto no ramo correto */
+        adiciona_noh(noh_atual, this.novo_animal, this.resp);
+
+        this.novo_animal = cria_novo_noh(noh_atual.info);    /* Adiciona o animal errado no outro ramo */
+        adiciona_noh(noh_atual, this.novo_animal, (this.resp == resposta_t.SIM ? resposta_t.NAO : resposta_t.SIM));
+
+        noh_atual.info = this.pergunta; /* Transforma noh atual de nome em pergunta */
+        noh_atual.tipo = tipo_t.QUESTAO;                
+    }
+  },
+  adivinha_animal: function(noh_atual) {
+    if (noh_atual == null || noh_atual.tipo != tipo_t.NOME_ANIMAL) {
+        alert("ERRO: Noh com nome de animal incorreto ou nulo\n");
+        return;
+    }
+    else {
+        this.linha = null;
+        do {
+            this.linha = prompt("VOCE ESTA PENSANDO EM UM(A) " + noh_atual.info + " [S/N]? "); /* Apresenta o animal */
+        } 
+        while (this.linha[0].toUpperCase() != 'S' && this.linha[0].toUpperCase() != 'N');
+
+        if (this.linha[0].toUpperCase() == 'N') {
+            this.insere_nova_questao(noh_atual); /* Nao acertou, entao vai inserir uma pergunta para 
+                                           desambiguar esse animal daquele que estava sendo pensado */
+        }
+        else {
+            alert("EU JA IMAGINAVA!\n"); /* Ele acertou! Fim de jogo! */
+        }
+    }        
+},
+pergunta_iterativa: function (noh_atual) {
+    if (noh_atual == null) {
+        alert("ERRO: Noh nulo encontrado na arvore de questoes\n");
+    }
+    if (noh_atual.tipo == tipo_t.NOME_ANIMAL) {
+        this.adivinha_animal(noh_atual); /* Se chegou a um noh contendo nome de animal, eh hora de advinhar! */
+    }
+    else /* atual->tipo == QUESTAO */ {
+        this.linha = null;
+        this.resp = null; 
+        do {
+            this.linha = prompt("RESPONDA: " + noh_atual.info + " [S/N]? ", ''); /* Apresenta a pergunta */
+        } 
+        while (this.linha[0].toUpperCase() != 'S' && this.linha[0].toUpperCase() != 'N');
+
+        this.resp = this.linha[0].toUpperCase() == 'S' ? resposta_t.SIM : resposta_t.NAO;
+        this.pergunta_iterativa(noh_atual.ramo[this.resp]); /* Procede para o ramo correspondente a resposta */
+    }
+  }  
+}
+
+window.onload = start;
+function start(){
+  noh_principal = cria_novo_noh('pato');
+  while(1)
+  {
+    Aadvark.pergunta_iterativa(noh_principal);
+  }
+}
+</script>
+</body>
+</html>
